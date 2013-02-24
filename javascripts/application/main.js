@@ -104,7 +104,7 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree',
 		},
 
 		generateBalls: function(count, e) {
-			count = count || (this.$multipleObjectsPerClick ? Util.randInt(2, 10) : 1);
+			count = count || (this.$multipleObjectsPerClick ? Util.randInt(2, 20) : 1);
 
 			if (!e) {
 				e = Util.randPoint();
