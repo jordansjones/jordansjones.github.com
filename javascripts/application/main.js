@@ -1,4 +1,4 @@
-define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree'], function (_, Backbone, Keymaster, Util, Circle, Tree) {
+define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree', "easel"], function (_, Backbone, Keymaster, Util, Circle, Tree, easel) {
 
 	return Backbone.View.extend({
 
@@ -6,7 +6,7 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 		$canvas: null,
 		$stage: null,
 
-		$stats: null,
+		$stats: {reset: function (){}, onTick: function() {}},
 
 		$objects: [],
 		$multipleObjectsPerClick: true,
@@ -22,15 +22,16 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 
 		render: function () {
 
-			this.$bounds = new Rectangle();
+			this.$bounds = new easel.Rectangle();
 			this.$bounds.height = Util.height;
 			this.$bounds.width = Util.width;
 
-			this.$stage = new Stage(this.$canvas.get(0));
-			this.$stage.onMouseUp = this.onMouseUp;
+			this.$stage = new easel.Stage(this.$canvas.get(0));
+			this.$stage.addEventListener("stagemouseup", this.onMouseUp);
 
-			Keymaster('up', this.onUpArrow);
-			Keymaster('down', this.onDownArrow);
+
+			Keymaster('up, pageup', this.onUpArrow);
+			Keymaster('down, pagedown', this.onDownArrow);
 			Keymaster('space', this.onSpaceBar);
 			Keymaster('1, 2, 3, 4, 5, 6, 7, 8, 9, 0', this.onNumberKey);
 
@@ -50,35 +51,38 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 		run: function () {
 			this.$stage.update();
 
-			Ticker.useRAF = true;
-			Ticker.setFPS(Util.framerate);
-			// Ticker.setInterval(Util.frameinterval);
+			easel.Ticker.useRAF = true;
+			easel.Ticker.setFPS(Util.framerate);
 
-			Ticker.addListener(this);
+			easel.Ticker.addListener(this);
 
 			return this;
 		},
 
 		pause: function (doPause) {
-			Ticker.setPaused(doPause);
+			easel.Ticker.setPaused(doPause);
 			this.trigger("paused", doPause);
 		},
 
 		onSpaceBar: function () {
-			this.pause(!Ticker.getPaused());
+			this.pause(!easel.Ticker.getPaused());
 			return false;
 		},
 
 		onUpArrow: function (e) {
-			this.generateBalls(1);
+			var count = (e.keyIdentifier === "PageUp") ? 10 : 1;
+			this.generateBalls(count);
 			return false;
 		},
 
 		onDownArrow: function (e) {
-			var o = this.$objects.pop();
-			if (!o) return;
-			this.$stage.removeChild(o.$circle);
-			Circle.decrement();
+			var count = (e.keyIdentifier === "PageDown") ? 10 : 1;
+			for (var i = 0; i < count; i++) {
+				var o = this.$objects.pop();
+				if (!o) return;
+				this.$stage.removeChild(o.$circle);
+				Circle.decrement();
+			}
 			return false;
 		},
 
@@ -90,10 +94,12 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 		onNumberKey: function(e) {
 			if (!e || !e.keyCode || !_.isNumber(e.keyCode)) return;
 			var num = e.keyCode - 48;
-			if (num === 0)
+			if (num === 0) {
 				this.reset();
-			else
+			}
+			else {
 				this.generateBalls(num);
+			}
 			return false;
 		},
 
@@ -125,9 +131,7 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 
 			this.updateCollisions();
 
-
-			if (this.$stats != null)
-				this.$stats.onTick(msElapsed);
+			this.$stats.onTick(msElapsed);
 
 			this.$stage.update();
 		},
@@ -139,6 +143,7 @@ define(['underscore', 'backbone', 'keymaster', 'util', './Circle', './QuadTree']
 
 		reset: function () {
 			this.$stage.removeAllChildren();
+			this.$objects = [];
 			this.$stats.reset();
 			Circle.reset();
 		},

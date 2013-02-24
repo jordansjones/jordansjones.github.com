@@ -1,22 +1,42 @@
-define(['underscore', 'jquery', 'util'], function (_, $, Util) {
+define(['underscore', 'jquery', 'util', "easel"], function (_, $, Util, easel) {
 
 
 	var Stats = function () {
 
-		this.$yOffset = 20;
+		this.$yOffset = 2;
 		this.$stage = null;
 		this.$stats = null;
 
-		this.$fps = new Text("0.00", Util.fontNormal, Util.fontColor);
-		this.$fpsLabel = new Text("FPS:", Util.fontBold, Util.fontColor);
 
-		this.$count = new Text("0", Util.fontNormal, Util.fontColor);
-		this.$countLabel = new Text("Count:", Util.fontBold, Util.fontColor);
+		this.$rows = {};
+
+		this._newRow("fps", "FPS:", 0.00);
+		this._newRow("balls", "Balls", 0);
+		this._newRow("objects", "Objects:", 0);
 	};
 
 	_.extend(Stats.prototype, {
 
+		_newRow: function(name, label, defaultValue) {
+			this.$rows[name] = {
+				label:  new easel.Text(label, Util.fontBold, Util.fontColor),
+				val: new easel.Text("" + defaultValue, Util.fontNormal, Util.fontColor),
+				raw: defaultValue,
+				def: defaultValue
+			};
+		},
+
 		render: function (stage) {
+			var rowKeys = _.keys(this.$rows);
+			var rowHeight = 19;
+			var rowCount = rowKeys.length;
+
+			var cWidth = 120;
+			var cHeight = (rowHeight * rowCount);
+			var container = new easel.Container();
+			container.x = (Util.width - cWidth - 5);
+			container.y = 5;
+
 			var ss = this.cloneCanvas(stage.canvas);
 			ss = $(ss);
 			var cvs = $(stage.canvas);
@@ -29,43 +49,37 @@ define(['underscore', 'jquery', 'util'], function (_, $, Util) {
 				'opacity': 1
 			});
 
-			this.$stats = new Stage(ss.get(0));
-
-			var cWidth = 100;
-			var cHeight = 50;
-			var container = new Container();
-			container.x = (Util.width - cWidth - 5);
-			container.y = 5;
+			this.$stats = new easel.Stage(ss.get(0));
 
 
-			var g = new Graphics();
+			var g = new easel.Graphics();
 			g.setStrokeStyle(1);
-			g.beginStroke(Graphics.getRGB(255, 255, 255, .7));
-			g.beginFill(Graphics.getRGB(51, 51, 51, .5));
+			g.beginStroke(easel.Graphics.getRGB(255, 255, 255, .7));
+			g.beginFill(easel.Graphics.getRGB(51, 51, 51, .5));
 			g.drawRoundRect(0, 0, cWidth, cHeight, 5);
-			container.addChild(new Shape(g));
+			container.addChild(new easel.Shape(g));
 
-			container.addChild(this.$fps);
-			this.$fps.textAlign = "right";
-			this.$fps.maxWidth = 50;
-			this.$fps.x = (cWidth - 5);
-			this.$fps.y = this.$yOffset;
+			var key, prevKey, x = (cWidth - 5), y, maxWidth = 50, row;
 
-			container.addChild(this.$fpsLabel);
-			this.$fpsLabel.maxWidth = 30;
-			this.$fpsLabel.x = (this.$fps.x - this.$fps.maxWidth - this.$fpsLabel.maxWidth);
-			this.$fpsLabel.y = this.$fps.y;
+			for (var i in rowKeys) {
+				key = rowKeys[i];
+				row = this.$rows[key];
 
-			container.addChild(this.$count);
-			this.$count.textAlign = "right";
-			this.$count.maxWidth = 50;
-			this.$count.x = this.$fps.x;
-			this.$count.y = this.$yOffset + this.$fps.getMeasuredLineHeight() + 2;
+				y = this.$yOffset + (i * rowHeight) - i;
 
-			container.addChild(this.$countLabel);
-			this.$countLabel.maxWidth = 40;
-			this.$countLabel.x = (this.$count.x - this.$count.maxWidth - this.$countLabel.maxWidth);
-			this.$countLabel.y = this.$count.y;
+				// Add Value
+				row.val.textAlign = "right";
+				row.val.maxWidth = maxWidth;
+				row.val.x = x;
+				row.val.y = y; 
+				container.addChild(row.val);
+
+				// Add Label
+				row.label.maxWidth = maxWidth;
+				row.label.x = (x - maxWidth - maxWidth);
+				row.label.y = y;
+				container.addChild(row.label);
+			}
 
 			this.$stats.addChild(container);
 
@@ -74,8 +88,7 @@ define(['underscore', 'jquery', 'util'], function (_, $, Util) {
 		},
 
 		reset: function () {
-			this.$fps.text = "0.0";
-			this.$count.text = "0";
+			this.draw(function(r) { return r.def; });
 		},
 
 		cloneCanvas: function(cvs) {
@@ -99,31 +112,44 @@ define(['underscore', 'jquery', 'util'], function (_, $, Util) {
 
 		onTick: function () {
 			this.updateFps();
+			this.updateBallCount();
 			this.updateObjectCount();
+			this.draw(function(r) { return r.raw; });
 			this.$stats.update();
 		},
 
+		draw: function (valFn) {
+			_.each(this.$rows, function (row) {
+				row.val.text = valFn(row);
+			});
+		},
+
 		updateFps: function () {
-
-			// console.log ()
-
-			var fps = Ticker.getMeasuredFPS();
+			var fps = easel.Ticker.getMeasuredFPS();
 			fps *= 100;
 			fps = Math.round(fps);
 			fps /= 100;
-			this.$fps.text = fps;
+			this.$rows["fps"].raw = fps;
+		},
+
+		updateBallCount: function() {
+			this.$rows["balls"].raw = this.getCount(this.$stage, false);
 		},
 
 		updateObjectCount: function() {
-			this.$count.text = this.getCount(this.$stage) + this.getCount(this.$stats);
+			this.$rows["objects"].raw = this.getCount(this.$stage, true) + this.getCount(this.$stats, true);
 		},
 
-		getCount: function (obj) {
+		getCount: function (obj, recurse) {
+			recurse = (typeof(recurse) !== "undefined") ? recurse : true;
 			var count = 0;
 			if (obj && obj.getNumChildren && obj.getChildAt) {
 				for (var i = 0, size = obj.getNumChildren(); i < size; i++) {
 					var child = obj.getChildAt(i);
-					count += 1 + this.getCount(child);
+					count += 1;
+					if (recurse) {
+						count += this.getCount(child, recurse);
+					}
 				}
 			}
 			return count;

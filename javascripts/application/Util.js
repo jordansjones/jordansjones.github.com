@@ -1,32 +1,37 @@
-define({
-	// Dimensions
-	'height': 800,
-	'width': 940,
+define(function(require) {
 
-	// Framerate
-	'framerate': 60,
-	'frameinterval': 10,
-	'speedPerTick': .75,
+	var easel = require("easel");
 
-	// Text
-	fontNormal: "13px 'Helvetica Neue', Helvetica, Arial, sans-serif",
-	fontBold: "bold 13px 'Helvetica Neue', Helvetica, Arial, sans-serif",
-	fontColor: "#ffffff",
+	return {
+		// Dimensions
+		'height': 800,
+		'width': 940,
 
-	// Functions
+		// Framerate
+		'framerate': 60,
+		'frameinterval': 10,
+		'speedPerTick': .75,
 
-	rand: function (min, max) {
-		return Math.random() * (max - min) + min;
-	},
+		// Text
+		fontNormal: "13px 'Helvetica Neue', Helvetica, Arial, sans-serif",
+		fontBold: "bold 13px 'Helvetica Neue', Helvetica, Arial, sans-serif",
+		fontColor: "#ffffff",
 
-	randInt: function (min, max) {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	},
+		// Functions
 
-	randPoint: function () {
-		var x = this.rand(0, this.width);
-		var y = this.rand(0, this.height);
-		return new Point(x, y);
-	}
+		rand: function (min, max) {
+			return Math.random() * (max - min) + min;
+		},
+
+		randInt: function (min, max) {
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+		},
+
+		randPoint: function () {
+			var x = this.rand(0, this.width);
+			var y = this.rand(0, this.height);
+			return new easel.Point(x, y);
+		}
+	};
 
 });

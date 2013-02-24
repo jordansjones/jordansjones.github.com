@@ -2,18 +2,29 @@
 
 // Configure Path aliases
 require.config({
+	urlArgs: "bust=" +  (new Date()).getTime(),
 	paths: {
 		"backbone": 	"vendor/backbone",
 		"jquery": 		"vendor/jquery",
 		"underscore": 	"vendor/underscore",
 		"keymaster": 	"vendor/keymaster",
+		"easel": "vendor/easeljs-NEXT.min",
+		"tween": "vendor/tweenjs-NEXT.min", 
 
 		// App
 		'util': 		'application/Util'
+	},
+	shim: {
+		"easel": {
+			"exports": "createjs"
+		},
+		"tween": {
+			"exports": "createjs"
+		}
 	}
 });
 
-requirejs(['jquery', 'application/main', 'util'], function ($, Main, Util) {
+requirejs(['jquery', 'application/main', 'util', "easel", "tween"], function ($, Main, Util, easel) {
 
 	$(function () {
 		var $window = $(window);
@@ -50,10 +61,10 @@ requirejs(['jquery', 'application/main', 'util'], function ($, Main, Util) {
 
 		$document.on('webkitvisibilitychange', function () {
 			var isHidden = $document.attr('webkitHidden');
-			if (isHidden && !Ticker.getPaused())
+			if (isHidden && !easel.Ticker.getPaused())
 				main.pause(true);
-			if (!isHidden && Ticker.getPaused() && !$("#play").hasClass("btn-warning"))
-				main.pause(false);
+			// if (!isHidden && Ticker.getPaused() && !$("#play").hasClass("btn-warning"))
+			// 	main.pause(false);
 		});
 		$window.on('resize', function (e) {
 			onResize();
