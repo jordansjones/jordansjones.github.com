@@ -2,7 +2,7 @@
 
 // Configure Path aliases
 require.config({
-	urlArgs: "bust=" +  (new Date()).getTime(),
+	// urlArgs: "bust=" +  (new Date()).getTime(),
 	paths: {
 		"backbone": 	"vendor/backbone",
 		"jquery": 		"vendor/jquery",
