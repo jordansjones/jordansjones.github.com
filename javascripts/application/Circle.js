@@ -3,14 +3,13 @@ define(['underscore', 'util',"easel"], function (_, Util, easel) {
 	var CIRCLE_RADIUS = 15;
 	var CIRCLE_DIAMETER = 2 * CIRCLE_RADIUS;
 	var HALF_CIRCLE = CIRCLE_DIAMETER / 2;
-	var circleXReset;
 
-	var Bounds = new easel.Rectangle(HALF_CIRCLE, HALF_CIRCLE, Util.width - HALF_CIRCLE, Util.height - HALF_CIRCLE);
+	var ShapeBounds = new easel.Rectangle(HALF_CIRCLE, HALF_CIRCLE, Util.width - HALF_CIRCLE, Util.height - HALF_CIRCLE);
 
 	var COUNT = 0;
 
-	var Circle = function (xy) {
-		this.$circle = null;
+	var Circle = function (xy, speed) {
+		this.$obj = null;
 		this.$start = new easel.Point(xy.x, xy.y);
 		this.$dest = null;
 		this.$direction = null;
@@ -21,6 +20,7 @@ define(['underscore', 'util',"easel"], function (_, Util, easel) {
 		this.$iteration = 0;
 		this.x = this.$start.x;
 		this.y = this.$start.y;
+		this.speed = speed;
 	};
 
 	_.extend(Circle.prototype, {
@@ -51,35 +51,40 @@ define(['underscore', 'util',"easel"], function (_, Util, easel) {
 			txt.textAlign = "center";
 			txt.textBaseline = "middle";
 			txt.maxWidth = CIRCLE_DIAMETER;
+			txt.shadow = new easel.Shadow("#000000", 0, 0, 5);
 			container.addChild(txt);
 
 			return container;
 		},
 
 		newFillColor: function () {
-			var r = Util.randInt(0, 200);
-			var g = Util.randInt(0, 200);
-			var b = Util.randInt(0, 200);
+			var r = Util.randInt(0, 254);
+			var g = Util.randInt(0, 254);
+			var b = Util.randInt(0, 254);
 			return easel.Graphics.getRGB(r, g, b, 1);
 		},
 
+		destroy: function(stage) {
+			stage.removeChild(this.$obj);
+		},
+
 		render: function(stage) {
-			this.newDestination(Util.randPoint());
+			this.newDestination(Util.randPoint(stage));
 
 			var fillColor;
 			if (this.$count > 1) {
 				fillColor = this.newFillColor();
 			}
-			this.$circle = this.newShape(fillColor);
-			this.$circle.x = this.$start.x;
-			this.$circle.y = this.$start.y;
+			this.$obj = this.newShape(fillColor);
+			this.$obj.x = this.$start.x;
+			this.$obj.y = this.$start.y;
 
-			stage.addChild(this.$circle);
+			stage.addChild(this.$obj);
 
 			return this;
 		},
 
-		onTick: function (msElapsed) {
+		onTick: function (event) {
 			if (!this.$moving) return;
 			// if (this.$isColliding && this.$iteration > 50) {
 			// 	this.$direction.x *= -1;
@@ -89,24 +94,22 @@ define(['underscore', 'util',"easel"], function (_, Util, easel) {
 			// 	this.$iteration++;
 			// }
 
-			this.$circle.x += this.$direction.x * Util.speedPerTick * msElapsed;
-			this.$circle.y += this.$direction.y * Util.speedPerTick * msElapsed;
+			this.$obj.x += this.$direction.x * this.speed * event.delta;
+			this.$obj.y += this.$direction.y * this.speed * event.delta;
 
-			var x = this.$circle.x;
-			var y = this.$circle.y;
-			if (x > Bounds.width || x < Bounds.x) {
-				this.$circle.x = (x > (Bounds.width / 2)) ? Bounds.width : Bounds.x;
+			var x = this.$obj.x;
+			var y = this.$obj.y;
+			if (x > ShapeBounds.width || x < ShapeBounds.x) {
+				this.$obj.x = (x > (ShapeBounds.width / 2)) ? ShapeBounds.width : ShapeBounds.x;
 				this.$direction.x *= -1;
-				// change = true;
 			}
-			if (y > Bounds.height || y < Bounds.y) {
-				this.$circle.y = (y > (Bounds.height / 2)) ? Bounds.height : Bounds.y;
+			if (y > ShapeBounds.height || y < ShapeBounds.y) {
+				this.$obj.y = (y > (ShapeBounds.height / 2)) ? ShapeBounds.height : ShapeBounds.y;
 				this.$direction.y *= -1;
-				// change = true;
 			}
 
-			this.x = this.$circle.x;
-			this.y = this.$circle.y;
+			this.x = this.$obj.x;
+			this.y = this.$obj.y;
 
 			this.$isColliding = false;
 		},

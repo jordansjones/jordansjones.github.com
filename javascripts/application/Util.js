@@ -27,10 +27,12 @@ define(function(require) {
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		},
 
-		randPoint: function () {
-			var x = this.rand(0, this.width);
-			var y = this.rand(0, this.height);
-			return new easel.Point(x, y);
+		randPoint: function (stage) {
+			var bounds = stage.getBounds();
+			var x = this.rand(0, bounds.width);
+			var y = this.rand(0, bounds.height);
+			var point = new easel.Point(x, y);
+			return point;
 		}
 	};
 

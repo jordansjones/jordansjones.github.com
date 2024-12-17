@@ -5081,7 +5081,7 @@ html, body {
 @media -sass-debug-info{filename{font-family:file\:\/\/\/Users\/jordanjones\/Projects\/Web\/EaselTest\/sass\/screen\.scss}line{font-family:\0000320}}
 #stage-canvas {
   background-color: #333333;
-  display: none;
+  opacity: 0;
   position: absolute;
 }
 

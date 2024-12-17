@@ -27,34 +27,23 @@ require.config({
 requirejs(['jquery', 'application/main', 'util', "easel", "tween"], function ($, Main, Util, easel) {
 
 	$(function () {
-		var $window = $(window);
 		var $document = $(document);
 		var $wrapper = $('#stage-wrapper');
 		var $stage = $('#stage-canvas');
+
 		$stage
 			.attr({
 				'height': Util.height,
 				'width': Util.width
 			});
 
-		var onResize = function () {
-			var wHeight = $window.innerHeight();
-			var height = $stage.innerHeight();
-
-			var top = (wHeight - height) / 2;
-			$stage.css({
-				'top': top
-			});
-		};
-
-		onResize();
-
 		var main = new Main({
+			el: $wrapper,
 			canvas: $stage
-		}).setElement($wrapper).render();
+		}).render();
 
 		$stage
-			.fadeIn()
+			.fadeTo(400, 1)
 			.promise().then(function () {
 				main.run();
 			});
@@ -65,9 +54,6 @@ requirejs(['jquery', 'application/main', 'util', "easel", "tween"], function ($,
 				main.pause(true);
 			// if (!isHidden && Ticker.getPaused() && !$("#play").hasClass("btn-warning"))
 			// 	main.pause(false);
-		});
-		$window.on('resize', function (e) {
-			onResize();
 		});
 
 		$("#reset").on('click', function (e) {
